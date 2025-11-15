@@ -1,0 +1,13 @@
+################################################################################
+#  Namespace Definition
+#  Designed and Developed by: @sak_shetty
+#  Description:
+#  Creates a dedicated namespace for the Spring Boot + MySQL application stack.
+################################################################################
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sak-shetty
+  labels:
+    name: sak-shetty

@@ -1,0 +1,76 @@
+################################################################################
+#  MySQL Deployment & Service
+#  Designed and Developed by: @sak_shetty
+#  Description:
+#     - Deploys MySQL 8.0 database for Spring Boot app
+#     - Exposes internal ClusterIP service as "mysql-container"
+################################################################################
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  namespace: sak-shetty
+type: Opaque
+data:
+  # echo -n "1234" | base64 => MTIzNA==
+  # echo -n "myapplication" | base64 => bXlhcHBsaWNhdGlvbg==
+  MYSQL_ROOT_PASSWORD: MTIzNA==
+  MYSQL_DATABASE: bXlhcHBsaWNhdGlvbg==
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: sak-shetty
+  labels:
+    app: mysql-container
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-container
+  template:
+    metadata:
+      labels:
+        app: mysql-container
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_DATABASE
+          ports:
+            - containerPort: 3306
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "mysqladmin ping -h 127.0.0.1 -p$MYSQL_ROOT_PASSWORD"
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-container
+  namespace: sak-shetty
+spec:
+  selector:
+    app: mysql-container
+  ports:
+    - port: 3306
+      targetPort: 3306
+  type: ClusterIP
